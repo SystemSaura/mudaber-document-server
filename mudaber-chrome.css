@@ -1,0 +1,217 @@
+/* mudaber-chrome-css: Mudaber palette and type over the ONLYOFFICE ribbon.
+   Only colour, type and spacing. No layout is moved, nothing is hidden that
+   the licence requires us to keep, and the ONLYOFFICE logo is untouched.
+
+   THEME AWARE, and it has to be. The editor loads one of our two interface
+   themes and puts its id on <body>, so every colour below is a token resolved
+   per theme. An earlier version of this file hardcoded the light values with
+   !important and made dark mode unreadable: near-black input text on the dark
+   toolbar. Never reintroduce a literal colour outside these two blocks. */
+
+body.theme-mudaber-pure,
+body.theme-type-light {
+  --mdb-accent: #4F46E5;
+  --mdb-accent-hover: #4338CA;
+  --mdb-on-accent: #FFFFFF;
+  --mdb-ink: #1A1A1E;
+  --mdb-ink-2: #717174;
+  --mdb-surface: #FFFFFF;
+  --mdb-surface-2: #F4F4F5;
+  --mdb-pressed: #E8E8EA;
+  --mdb-hairline: #ECECEE;
+  --mdb-shadow: rgba(26, 26, 30, .12);
+  --mdb-focus-ring: rgba(79, 70, 229, .16);
+}
+
+/* Dark uses violet, not the light indigo. That is the app's own choice in the
+   Carbon chrome, not an inconsistency. */
+body.theme-mudaber-carbon,
+body.theme-type-dark {
+  --mdb-accent: #7C6AF0;
+  --mdb-accent-hover: #6C5AE0;
+  --mdb-on-accent: #FFFFFF;
+  --mdb-ink: #E8EAF0;
+  --mdb-ink-2: #8A8F9E;
+  --mdb-surface: #0E0F13;
+  --mdb-surface-2: rgba(255, 255, 255, .07);
+  --mdb-pressed: rgba(255, 255, 255, .12);
+  --mdb-hairline: #23262E;
+  --mdb-shadow: rgba(0, 0, 0, .45);
+  --mdb-focus-ring: rgba(124, 106, 240, .28);
+}
+
+/* ── type ─────────────────────────────────────────────────────────── */
+/* Font is the one thing that is genuinely theme independent. */
+body,
+#toolbar,
+#toolbar .tabs > li > a,
+.btn-toolbar,
+.combo-dataview,
+.input-field,
+.statusbar,
+#status-bar-tabs .tab > a {
+  font-family: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI",
+               Helvetica, Arial, sans-serif !important;
+}
+
+/* ── the ribbon shell ─────────────────────────────────────────────── */
+#toolbar {
+  border-bottom: 1px solid var(--mdb-hairline) !important;
+  box-shadow: none !important;
+}
+
+/* ── tab strip: File / Home / Insert ... ──────────────────────────── */
+#toolbar .tabs > li > a,
+#toolbar .ribtab > a {
+  color: var(--mdb-ink-2) !important;
+  font-weight: 500 !important;
+  letter-spacing: .1px;
+  border-radius: 6px !important;
+}
+#toolbar .tabs > li:hover > a,
+#toolbar .ribtab:hover > a {
+  background-color: var(--mdb-surface-2) !important;
+  color: var(--mdb-ink) !important;
+}
+#toolbar .tabs > li.active > a,
+#toolbar .ribtab.active > a {
+  color: var(--mdb-accent) !important;
+  background-color: transparent !important;
+  font-weight: 600 !important;
+}
+#toolbar .tabs > li.active::after,
+#toolbar .ribtab.active::after {
+  background-color: var(--mdb-accent) !important;
+}
+
+/* ── buttons in the ribbon body ───────────────────────────────────── */
+.btn-toolbar:hover,
+.btn-toolbar.over,
+.btn-group.split:hover > .btn-toolbar {
+  background-color: var(--mdb-surface-2) !important;
+  border-radius: 6px !important;
+}
+.btn-toolbar.active,
+.btn-toolbar.pressed,
+.btn-toolbar:active {
+  background-color: var(--mdb-pressed) !important;
+  border-radius: 6px !important;
+}
+
+/* ── inputs: font name, size, number format ───────────────────────── */
+/* Colour is deliberately NOT forced here. Upstream already themes the input
+   ink per theme, and forcing it is exactly what broke dark mode before. */
+.input-field input,
+.combobox input,
+.input-field .form-control {
+  border-radius: 6px !important;
+  border-color: var(--mdb-hairline) !important;
+}
+.input-field input:focus,
+.combobox input:focus {
+  border-color: var(--mdb-accent) !important;
+  box-shadow: 0 0 0 2px var(--mdb-focus-ring) !important;
+}
+
+/* ── formula bar ──────────────────────────────────────────────────── */
+#ce-group,
+.ce-group {
+  border-bottom: 1px solid var(--mdb-hairline) !important;
+}
+
+/* ── sheet tabs at the foot ───────────────────────────────────────── */
+#status-bar-tabs .tab.active > a,
+.statusbar .tab.active > a {
+  color: var(--mdb-accent) !important;
+  font-weight: 600 !important;
+}
+#status-bar-tabs .tab > a {
+  color: var(--mdb-ink-2) !important;
+  font-weight: 500 !important;
+}
+#status-bar,
+.statusbar {
+  border-top: 1px solid var(--mdb-hairline) !important;
+}
+
+/* ── primary buttons in dialogs ───────────────────────────────────── */
+.btn.primary,
+.dlg-btn.primary,
+button.btn.primary {
+  background-color: var(--mdb-accent) !important;
+  border-color: var(--mdb-accent) !important;
+  color: var(--mdb-on-accent) !important;
+  border-radius: 8px !important;
+}
+.btn.primary:hover,
+.dlg-btn.primary:hover {
+  background-color: var(--mdb-accent-hover) !important;
+  border-color: var(--mdb-accent-hover) !important;
+}
+
+/* ── checkboxes and radios ────────────────────────────────────────── */
+/* The View tab is a wall of these; stock they are a blue that is not ours. */
+input[type="checkbox"],
+input[type="radio"],
+.radiobox input,
+.checkbox input {
+  accent-color: var(--mdb-accent);
+}
+.checkbox.checked > .icon,
+.radiobox.checked > .icon,
+.checkbox-indeterminate > .icon {
+  color: var(--mdb-accent) !important;
+}
+
+/* ── dropdown and context menus ───────────────────────────────────── */
+.dropdown-menu,
+.menu-absolute-container .dropdown-menu,
+#menu-container .dropdown-menu,
+ul.dropdown-menu[role="menu"] {
+  border-radius: 8px !important;
+  border: 1px solid var(--mdb-hairline) !important;
+  box-shadow: 0 2px 6px 2px var(--mdb-shadow) !important;
+  padding: 6px 0 !important;
+}
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li.over > a {
+  background-color: var(--mdb-surface-2) !important;
+  color: var(--mdb-ink) !important;
+}
+
+/* ── scrollbars ───────────────────────────────────────────────────── */
+.ps-scrollbar-y,
+.ps-scrollbar-x {
+  background-color: var(--mdb-surface-2) !important;
+  border-radius: 4px !important;
+}
+
+/* ── ONLYOFFICE's own promos and outbound links ───────────────────── */
+/* Their release promo balloon and the feedback link send our users somewhere
+   that is not our product. Their logo, copyright and About stay: those are
+   the licence, these are not.
+   KNOWN GAP: the "New button" balloon survives this. It is not reachable in
+   the main document or any enumerable frame, so it is likely rendered into a
+   shadow root; hiding it needs a different hook than CSS in app.css. */
+.tip-newfeature,
+.new-feature-tip,
+.tooltip-new-feature,
+[class*="newfeature"],
+.left-panel-suggest,
+[id*="suggest-feature"],
+[class*="suggest-feature"] {
+  display: none !important;
+}
+
+/* ── the active sheet tab's underline ─────────────────────────────── */
+/* This is the last piece of ONLYOFFICE green in the editor and the most
+   visible one, sitting under the sheet name all day. It is not a theme
+   token: app.css hardcodes `box-shadow: 0 4px 0 #49795d inset` on the active
+   and selected tab, so no palette change could ever have reached it. */
+.statusbar #status-sheets-bar .nav-tabs > li.active > span,
+.statusbar #status-sheets-bar .nav-tabs > li.selected > span {
+  box-shadow: 0 4px 0 var(--mdb-accent) inset !important;
+}
+.statusbar #status-sheets-bar .nav-tabs > li.active > span {
+  color: var(--mdb-accent) !important;
+}
