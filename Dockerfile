@@ -43,7 +43,7 @@ COPY --from=sprites /work/presentationeditor /var/www/onlyoffice/documentserver/
 # layer so a change to any single artifact rebuilds exactly one layer.
 COPY theme-mudaber-pure.json theme-mudaber-carbon.json \
      patch-themes-js.py patch-ui-chrome.py patch-sdk-colors.py patch-sdk-move-insert.py \
-     mudaber-chrome.css \
+     mudaber-chrome.css mudaber-warm-check.html \
      apply-branding.sh /opt/mudaber-branding/
 
 RUN chmod +x /opt/mudaber-branding/apply-branding.sh \

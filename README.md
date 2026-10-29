@@ -20,6 +20,7 @@ At image build time, `apply-branding.sh` applies the following to the stock file
 | `tint-sprites.py` | Recolours the toolbar icon sprites. |
 | `patch-sdk-colors.py` | Grid line, selection and fill-handle colours in the spreadsheet canvas (`sdkjs/cell/sdk-all.js`). |
 | `patch-sdk-move-insert.py` | Dragging a whole column or row inserts it where you drop it, and the others shift aside, instead of overwriting. Stock ONLYOFFICE has this behaviour only while Shift is held. |
+| `mudaber-warm-check.html` | A small added page, beside `cache-scripts.html`, that reports which of the editor's main files the browser's cache still holds, so the Mudaber app can re-download the editor in the background when the cache has been dropped. It only reads the cache. |
 
 The ONLYOFFICE logo and the legal notices are kept as they are.
 

@@ -90,6 +90,13 @@ for app in spreadsheeteditor documenteditor presentationeditor; do
     fi
 done
 
+echo "==> Installing the editor cache check"
+# The app frames this page to ask whether the editor is still in this machine's
+# cache, and re-downloads it in the background when it is not (see the page).
+# It sits beside cache-scripts.html so the server's /web-apps/ redirect hands it
+# the versioned path the editor is cached under.
+install -m 0644 "$STAGE/mudaber-warm-check.html" "$WEBAPPS/apps/api/documents/mudaber-warm-check.html"
+
 echo "==> Pinning the asset cache tag"
 # Three things mint a tag - boot, the font regeneration that also runs at every
 # boot, and the plugin manager - and all three funnel through this one script,

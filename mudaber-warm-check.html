@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!-- mudaber-warm-check
+     Tells the Mudaber app which parts of the editor this machine's browser is
+     still holding, so the app re-downloads them in the background when they
+     are gone instead of trusting a note that says it already did.
+
+     It has to be a page at this origin: the editor lives in the service worker
+     cache of office.mudaber.cc, and only a page of that same origin, framed by
+     the same app, can read it. The app frames it hidden and listens for one
+     message. Nothing here writes or fetches; it only looks.
+
+     Installed by apply-branding.sh next to cache-scripts.html, served through
+     the server's usual redirect to /<version>/web-apps/..., which is how it
+     learns the version the editor is cached under. -->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mudaber editor check</title>
+</head>
+<body>
+<script>
+(function () {
+    // The pieces whose absence turns opening a file into downloading the
+    // editor: each editor's engine and app, and the font engine all three
+    // share. A browser that drops the cache drops all of it at once, so these
+    // few stand for the ~250 files behind them.
+    var NEEDED = [
+        'sdkjs/cell/sdk-all.js',
+        'sdkjs/word/sdk-all.js',
+        'sdkjs/slide/sdk-all.js',
+        'web-apps/apps/spreadsheeteditor/main/app.js',
+        'web-apps/apps/documenteditor/main/app.js',
+        'web-apps/apps/presentationeditor/main/app.js',
+        'sdkjs/common/libfont/engine/fonts.wasm'
+    ];
+    // Same rule the service worker uses to name its cache.
+    var CACHE_PREFIX = 'document_editor_static_';
+
+    var version = location.pathname.split('/')[1] || '';
+
+    function reply(missing, error) {
+        parent.postMessage({
+            type: 'mudaber-office-warm-check',
+            version: version,
+            missing: missing,
+            error: error || null
+        }, '*');
+    }
+
+    if (!/^\d+\.\d+\.\d+[.-]\w+$/.test(version)) return reply(NEEDED, 'unversioned');
+    if (!window.caches) return reply(NEEDED, 'no-cache-storage');
+
+    var name = CACHE_PREFIX + version;
+    var base = location.origin + '/' + version + '/';
+
+    // has() before open(): open() would create an empty cache just by asking.
+    caches.has(name)
+        .then(function (exists) {
+            if (!exists) return NEEDED.slice();
+            return caches.open(name).then(function (cache) {
+                return Promise.all(NEEDED.map(function (path) {
+                    return cache
+                        .match(base + path, { ignoreSearch: true, ignoreVary: true })
+                        .then(function (hit) { return hit ? null : path; });
+                }));
+            }).then(function (results) {
+                return results.filter(Boolean);
+            });
+        })
+        .then(
+            function (missing) { reply(missing); },
+            function (err) { reply(NEEDED, String((err && err.message) || err)); }
+        );
+})();
+</script>
+</body>
+</html>
