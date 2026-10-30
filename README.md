@@ -17,12 +17,14 @@ At image build time, `apply-branding.sh` applies the following to the stock file
 | `patch-themes-js.py` | Makes custom themes apply when the editor launches. In stock 9.4 they only apply when picked from the View menu. |
 | `patch-ui-chrome.py` | Hides the header avatars and the right settings strip. Trims the editor preload list. |
 | `mudaber-chrome.css` | Colour and type overrides appended to each editor's `app.css`. |
-| `tint-sprites.py` | Recolours the toolbar icon sprites. |
+| `tint-sprites.py` | Recolours the toolbar icon sprites to the Mudaber accent. |
 | `patch-sdk-colors.py` | Grid line, selection and fill-handle colours in the spreadsheet canvas (`sdkjs/cell/sdk-all.js`). |
 | `patch-sdk-move-insert.py` | Dragging a whole column or row inserts it where you drop it, and the others shift aside, instead of overwriting. Stock ONLYOFFICE has this behaviour only while Shift is held. |
+| `mudaber-sheet.js`, `mudaber-sheet.css` | The spreadsheet editor's everyday mode, loaded from `spreadsheeteditor/main/index.html`: one row of common tools (undo, redo, bold, italic, strikethrough, colours, alignment, sort, filter) with a More button that brings back the full stock ribbon, and the tab strip, left rail, name box and fx button hidden until then. Also a message bridge that only the editor's parent page may use, to read the open sheet and to apply cell changes a person approved in the Mudaber app; the changes go through the same command path the editor's plugins use. |
+| `fonts/` | Inter (SIL Open Font License 1.1, licence included), installed as a system font. |
 | `mudaber-warm-check.html` | A small added page, beside `cache-scripts.html`, that reports which of the editor's main files the browser's cache still holds, so the Mudaber app can re-download the editor in the background when the cache has been dropped. It only reads the cache. |
 
-The ONLYOFFICE logo and the legal notices are kept as they are.
+The ONLYOFFICE logo and the legal notices are kept as they are; in the spreadsheet's everyday mode the logo sits at the end of the toolbar and opens About.
 
 ## Build
 

@@ -4,13 +4,13 @@
 The cell grid is drawn on a canvas, not styled by CSS, and its colours are
 hardcoded CColor literals inside sdkjs/cell/sdk-all.js. No editorConfig key
 and no custom uiTheme reaches them - the theme JSONs skin the UI chrome, so
-the sheet itself keeps shipping OnlyOffice green on top of Mudaber indigo.
+the sheet itself keeps shipping OnlyOffice green on top of the Mudaber accent.
 Patching the literal is the only lever, and the file is ours.
 
 Patch sdk-all.js only. The browser loads it (verified); the minified sibling
 sdk-all-min.js does not contain these literals and must stay untouched.
 
-  CColor(72, 121, 92)   -> accent indigo   selection border + fill handle
+  CColor(72, 121, 92)   -> accent blue     selection border + fill handle
   CColor(202, 202, 202) -> lighter grey    grid lines
 
 The freeze line (129, 129, 129) is deliberately left alone: in this build
@@ -31,8 +31,8 @@ import sys
 MARKER = "mudaber-sdk-colors-patch"
 
 # Mudaber palette - edit here, nowhere else.
-ACCENT_INDIGO = "CColor(79, 70, 229)"    # #4F46E5
-GRIDLINE_GREY = "CColor(225, 225, 225)"  # #E1E1E1
+ACCENT_BLUE = "CColor(47, 107, 255)"     # #2F6BFF, the Aurora accent
+GRIDLINE_GREY = "CColor(230, 233, 240)"  # #E6E9F0, Aurora hairline
 
 # Stock DS 9.4.0-129 literals, written with spaces after the commas.
 OO_SELECTION_GREEN = "CColor(72, 121, 92)"    # #48795C
@@ -40,7 +40,7 @@ OO_GRIDLINE_GREY = "CColor(202, 202, 202)"    # #CACACA
 
 # (literal, replacement, exact expected count, label)
 REPLACEMENTS = [
-    (OO_SELECTION_GREEN, ACCENT_INDIGO, 1, "selection"),
+    (OO_SELECTION_GREEN, ACCENT_BLUE, 1, "selection"),
     (OO_GRIDLINE_GREY, GRIDLINE_GREY, 3, "gridline"),
 ]
 

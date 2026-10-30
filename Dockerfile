@@ -43,8 +43,12 @@ COPY --from=sprites /work/presentationeditor /var/www/onlyoffice/documentserver/
 # layer so a change to any single artifact rebuilds exactly one layer.
 COPY theme-mudaber-pure.json theme-mudaber-carbon.json \
      patch-themes-js.py patch-ui-chrome.py patch-sdk-colors.py patch-sdk-move-insert.py \
-     mudaber-chrome.css mudaber-warm-check.html \
+     mudaber-chrome.css mudaber-warm-check.html mudaber-sheet.css mudaber-sheet.js \
      apply-branding.sh /opt/mudaber-branding/
+# Inter, the Mudaber sheet font (SIL OFL 1.1, licence beside it). Staged flat
+# so the cache tag below hashes it like every other artifact.
+COPY fonts/Inter-Regular.ttf fonts/Inter-Bold.ttf fonts/Inter-Italic.ttf fonts/Inter-BoldItalic.ttf \
+     fonts/Inter-LICENSE.txt /opt/mudaber-branding/
 
 RUN chmod +x /opt/mudaber-branding/apply-branding.sh \
  && /opt/mudaber-branding/apply-branding.sh
@@ -56,6 +60,7 @@ RUN chmod +x /opt/mudaber-branding/apply-branding.sh \
 # it changes when what we serve changes and at no other time. Restarts we do not
 # control - reboots, crashes, the proxy - keep serving the same immutable URLs.
 LABEL org.opencontainers.image.title="Mudaber Document Server" \
-      org.opencontainers.image.description="ONLYOFFICE Docs 9.4.0-129 with Mudaber chrome, themes, grid palette, inked sprites, and insert-on-drop column/row moves" \
+      org.opencontainers.image.description="ONLYOFFICE Docs 9.4.0-129 with Mudaber chrome, themes, grid palette, inked sprites, insert-on-drop column/row moves, the everyday sheet toolbar, the Dabbour bridge and Inter" \
       org.opencontainers.image.vendor="Mudaber" \
-      cc.mudaber.ds-version="9.4.0-129"
+      cc.mudaber.ds-version="9.4.0-129" \
+      cc.mudaber.sheet="everyday toolbar, Dabbour bridge, Inter"

@@ -10,8 +10,8 @@
 
 body.theme-mudaber-pure,
 body.theme-type-light {
-  --mdb-accent: #4F46E5;
-  --mdb-accent-hover: #4338CA;
+  --mdb-accent: #2F6BFF;
+  --mdb-accent-hover: #1D47E6;
   --mdb-on-accent: #FFFFFF;
   --mdb-ink: #1A1A1E;
   --mdb-ink-2: #717174;
@@ -20,10 +20,10 @@ body.theme-type-light {
   --mdb-pressed: #E8E8EA;
   --mdb-hairline: #ECECEE;
   --mdb-shadow: rgba(26, 26, 30, .12);
-  --mdb-focus-ring: rgba(79, 70, 229, .16);
+  --mdb-focus-ring: rgba(47, 107, 255, .16);
 }
 
-/* Dark uses violet, not the light indigo. That is the app's own choice in the
+/* Dark uses violet, not the light blue. That is the app's own choice in the
    Carbon chrome, not an inconsistency. */
 body.theme-mudaber-carbon,
 body.theme-type-dark {

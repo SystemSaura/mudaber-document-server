@@ -90,6 +90,39 @@ for app in spreadsheeteditor documenteditor presentationeditor; do
     fi
 done
 
+echo "==> Installing the sheet's everyday toolbar and Dabbour bridge"
+# mudaber-sheet.js picks the toolbar mode before the editor lays itself out,
+# so it must load ahead of the app: the editor's own index.html includes it,
+# with its stylesheet after app.css. Spreadsheets only.
+SSE="$WEBAPPS/apps/spreadsheeteditor/main"
+install -d -m 0755 "$SSE/resources/mudaber"
+install -m 0644 "$STAGE/mudaber-sheet.js"  "$SSE/resources/mudaber/sheet.js"
+install -m 0644 "$STAGE/mudaber-sheet.css" "$SSE/resources/mudaber/sheet.css"
+python3 - "$SSE/index.html" <<'PY'
+import sys, re
+path = sys.argv[1]
+src = open(path, encoding="utf-8").read()
+if "mudaber-sheet" in src:
+    print("    index.html already includes it")
+    sys.exit(0)
+assert src.count("</head>") == 1, "upstream spreadsheet index.html changed - re-check where the sheet script goes"
+first = re.search(r"<script\b", src)
+assert first, "upstream spreadsheet index.html has no script - re-check"
+tag = '<!-- mudaber-sheet --><script src="resources/mudaber/sheet.js"></script>\n'
+src = src[:first.start()] + tag + src[first.start():]
+src = src.replace("</head>", '<link rel="stylesheet" type="text/css" href="resources/mudaber/sheet.css"></head>', 1)
+open(path, "w", encoding="utf-8").write(src)
+print("    index.html includes the sheet script and stylesheet")
+PY
+[ -f "$SSE/index.html.gz" ] && gzip -9 -n -c "$SSE/index.html" > "$SSE/index.html.gz"
+
+echo "==> Installing Inter"
+# The font the Mudaber look sets on a sheet. The server regenerates its font
+# list at every boot, which is when Inter joins it.
+install -d -m 0755 /usr/share/fonts/truetype/inter
+install -m 0644 "$STAGE"/Inter-*.ttf /usr/share/fonts/truetype/inter/
+install -m 0644 "$STAGE/Inter-LICENSE.txt" /usr/share/fonts/truetype/inter/LICENSE.txt
+
 echo "==> Installing the editor cache check"
 # The app frames this page to ask whether the editor is still in this machine's
 # cache, and re-downloads it in the background when it is not (see the page).

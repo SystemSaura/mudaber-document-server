@@ -18,7 +18,7 @@ transform is per pixel rather than per file:
                      every glyph, the one `.toolbar__icon.icon--inverse` reaches
                      with `background-position-x:-20px` for dark surfaces;
                      inking those would make them vanish.
-  ONLYOFFICE blue -> rotated onto the Mudaber indigo hue, keeping its own
+  ONLYOFFICE blue -> rotated onto the Mudaber accent hue (Aurora blue), keeping its own
                      saturation and lightness so shading and antialiasing
                      survive. This is what stops the icons reading as theirs.
   anything else   -> left alone. Reds and greens are semantic (delete, error,
@@ -40,9 +40,9 @@ from PIL import Image, UnidentifiedImageError
 # themeable icons have to read as one set.
 INK = (113, 113, 116)  # #717174
 
-# Mudaber accent #4F46E5. Only the hue is taken; each pixel keeps its own
+# Mudaber accent #2F6BFF (Aurora). Only the hue is taken; each pixel keeps its own
 # saturation and lightness so the icons stay shaded rather than going flat.
-ACCENT_HUE = colorsys.rgb_to_hls(0x4F / 255, 0x46 / 255, 0xE5 / 255)[0]
+ACCENT_HUE = colorsys.rgb_to_hls(0x2F / 255, 0x6B / 255, 0xFF / 255)[0]
 
 # Above this a neutral pixel belongs to the white inverse twin.
 DARK_CUTOFF = 128

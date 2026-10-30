@@ -1,0 +1,169 @@
+/* mudaber-sheet-css: the spreadsheet editor, Mudaber's way (sheets only).
+ *
+ * Two modes, picked by mudaber-sheet.js on <html> before the layout is
+ * measured:
+ *   .mdb-simple  one slim row of everyday tools, no tab strip, no left rail,
+ *                no name box or fx button, a quieter status bar. The default.
+ *   .mdb-full    the stock ribbon, untouched, plus a "Fewer tools" button.
+ * Nothing is removed: everything hidden here is one press of More away, and
+ * every keyboard shortcut still works in both modes.
+ *
+ * Colours come from the Mudaber chrome tokens (mudaber-chrome.css), so the
+ * light and dark themes both hold.
+ */
+
+/* ── simple mode: the row ─────────────────────────────────────────────── */
+html.mdb-simple #toolbar .box-tabs { display: none !important; }
+/* the ribbon's own section keeps the full two-row height in its rules; left
+   alone its white background lies over the formula bar and the column heads.
+   Height only: overflow stays visible so the colour pickers can drop down. */
+html.mdb-simple #toolbar > section.toolbar { height: 50px !important; min-height: 0 !important; }
+html.mdb-simple #toolbar .box-controls {
+  height: 50px !important;
+  align-items: center !important;
+  padding: 0 10px 0 12px !important;
+  box-shadow: none !important;
+}
+html.mdb-simple #toolbar .box-controls > .panel.static,
+html.mdb-simple #toolbar .box-panels,
+html.mdb-simple #toolbar .box-panels > .panel[data-tab="home"] {
+  display: flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: 34px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  position: static !important;
+  overflow: visible !important;
+}
+html.mdb-simple #toolbar .box-panels > .panel:not([data-tab="home"]) { display: none !important; }
+html.mdb-simple #toolbar .box-controls .group,
+html.mdb-simple #toolbar .box-controls .elset { display: contents !important; }
+html.mdb-simple #toolbar .box-controls .separator,
+html.mdb-simple #toolbar .box-controls .btn-slot,
+html.mdb-simple #toolbar #slot-field-styles { display: none !important; }
+
+/* the everyday ones */
+html.mdb-simple #toolbar #slot-btn-undo,
+html.mdb-simple #toolbar #slot-btn-redo,
+html.mdb-simple #toolbar #slot-btn-bold,
+html.mdb-simple #toolbar #slot-btn-italic,
+html.mdb-simple #toolbar #slot-btn-strikeout,
+html.mdb-simple #toolbar #slot-btn-fontcolor,
+html.mdb-simple #toolbar #slot-btn-fillparag,
+html.mdb-simple #toolbar #slot-btn-align-left,
+html.mdb-simple #toolbar #slot-btn-align-center,
+html.mdb-simple #toolbar #slot-btn-align-right,
+html.mdb-simple #toolbar .panel[data-tab="home"] .slot-sortdesc,
+html.mdb-simple #toolbar .panel[data-tab="home"] .slot-sortasc,
+html.mdb-simple #toolbar .panel[data-tab="home"] .slot-btn-setfilter {
+  display: inline-flex !important;
+  align-items: center !important;
+  float: none !important;
+  position: relative;
+  margin: 0 1px !important;
+  height: 34px;
+}
+/* sections: undo | text | colour and alignment | sort and filter | More */
+html.mdb-simple #toolbar #slot-btn-bold,
+html.mdb-simple #toolbar #slot-btn-fontcolor,
+html.mdb-simple #toolbar .panel[data-tab="home"] .slot-sortdesc,
+html.mdb-simple #toolbar .mdb-morebox { margin-left: 15px !important; }
+html.mdb-simple #toolbar #slot-btn-bold::before,
+html.mdb-simple #toolbar #slot-btn-fontcolor::before,
+html.mdb-simple #toolbar .panel[data-tab="home"] .slot-sortdesc::before,
+html.mdb-simple #toolbar .mdb-morebox::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 8px;
+  height: 18px;
+  width: 1px;
+  background: var(--mdb-hairline);
+}
+
+/* buttons: a roomier, rounder hit area around the stock glyphs. Split
+   buttons (colours, sort, filter) keep the editor's own inner geometry: their
+   caret is laid over the glyph's box, and resizing either half misplaces it. */
+html.mdb-simple #toolbar .box-controls .btn-slot > .btn-toolbar {
+  height: 32px !important;
+  min-width: 32px !important;
+  padding: 0 6px !important;
+  border-radius: 9px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+html.mdb-simple #toolbar .box-controls .btn-slot > .btn-group > .btn-toolbar {
+  height: 32px !important;
+  border-radius: 9px !important;
+}
+html.mdb-simple #toolbar .box-controls .btn-slot .btn-toolbar.active,
+html.mdb-simple #toolbar .box-controls .btn-slot .btn-toolbar.pressed {
+  background-color: color-mix(in srgb, var(--mdb-accent) 12%, transparent) !important;
+}
+
+/* our own pieces: More, Find, their mark */
+.mdb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--mdb-ink-2);
+  font: 500 13px/1 "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mdb-btn:hover { background: var(--mdb-surface-2); color: var(--mdb-ink); }
+.mdb-btn:active { background: var(--mdb-pressed); }
+.mdb-btn svg { width: 17px; height: 17px; display: block; }
+.mdb-morebox { position: relative; display: none; align-items: center; }
+html.mdb-simple .mdb-morebox { display: inline-flex; }
+.mdb-more { padding: 0 11px 0 8px; }
+.mdb-tail { display: none; align-items: center; gap: 4px; margin-left: auto; }
+html.mdb-simple .mdb-tail { display: inline-flex; }
+.mdb-oo { padding: 0 8px; opacity: .55; }
+.mdb-oo:hover { opacity: .9; }
+.mdb-oo i {
+  display: block;
+  width: 86px;
+  height: 20px;
+  background: url('../../../../common/main/resources/img/header/dark-logo_s.svg') no-repeat left center / contain;
+}
+body.theme-type-dark .mdb-oo i,
+body.theme-mudaber-carbon .mdb-oo i {
+  background-image: url('../../../../common/main/resources/img/header/header-logo_s.svg');
+}
+
+/* "Fewer tools", on the full ribbon's tab strip */
+#toolbar .box-tabs .extra.right { position: relative; }
+.mdb-less { display: none; position: absolute; right: 10px; top: 3px; height: 26px; padding: 0 10px 0 8px; font-size: 12.5px; }
+.mdb-less svg { width: 13px; height: 13px; }
+html.mdb-full .mdb-less { display: inline-flex; }
+
+/* ── simple mode: the rest of the frame ───────────────────────────────── */
+html.mdb-simple #left-menu { display: none !important; }
+
+/* the formula bar keeps its text box; name box and fx go */
+html.mdb-simple #cell-editing-box .ce-group-name { display: none !important; }
+html.mdb-simple #cell-editing-box .ce-group-content {
+  margin: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+html.mdb-simple #cell-editing-box .ce-group-content #ce-cell-content { padding-left: 14px !important; padding-right: 26px !important; }
+
+/* status bar: sheet tabs, add sheet, zoom as a figure */
+html.mdb-simple #status-tabs-scroll,
+html.mdb-simple #status-btn-tabslist,
+html.mdb-simple #status-btn-zoomdown,
+html.mdb-simple #status-btn-zoomup,
+html.mdb-simple #status-zoom-box .separator { display: none !important; }
+html.mdb-simple #status-addtabs-box { border: 0 !important; padding: 0 4px 0 8px !important; }
+html.mdb-simple #status-sheets-bar-box { left: 44px !important; }
+html.mdb-simple #status-zoom-box { width: auto !important; padding-right: 8px !important; }
