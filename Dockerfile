@@ -42,7 +42,7 @@ COPY --from=sprites /work/presentationeditor /var/www/onlyoffice/documentserver/
 # Everything we ship, staged where the build script expects it. Kept in one
 # layer so a change to any single artifact rebuilds exactly one layer.
 COPY theme-mudaber-pure.json theme-mudaber-carbon.json \
-     patch-themes-js.py patch-ui-chrome.py patch-sdk-colors.py patch-sdk-move-insert.py \
+     patch-themes-js.py patch-ui-chrome.py patch-sdk-colors.py patch-sdk-move-insert.py patch-sdk-padding.py \
      mudaber-chrome.css mudaber-warm-check.html mudaber-sheet.css mudaber-sheet.js \
      apply-branding.sh /opt/mudaber-branding/
 # Inter, the Mudaber sheet font (SIL OFL 1.1, licence beside it). Staged flat

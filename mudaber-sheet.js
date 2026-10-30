@@ -11,7 +11,16 @@
  *    ribbon back, untouched; "Fewer tools" returns. The choice is remembered
  *    on this device. The look of both modes lives in mudaber-sheet.css.
  *
- * 2. A bridge for Dabbour. Mudaber's own page (this frame's parent, and only
+ * 2. The Mudaber look, on its own. The first time a sheet opens here in edit
+ *    mode (and any tab added later, the moment it is shown), it gets Inter 10,
+ *    roomy rows with text centred, a light header row, and a quiet numbering
+ *    column, applied through the same command path as everything below, so
+ *    it is one undo step and saves like anything typed. A hidden sheet-level
+ *    name (MudaberLook) marks a sheet as done, so it happens once per sheet,
+ *    on every device, and never fights choices made after it. The app is told
+ *    (mudaber-sheet-look) so it can offer Undo.
+ *
+ * 3. A bridge for Dabbour. Mudaber's own page (this frame's parent, and only
  *    it) can ask for a snapshot of the open sheet and apply the cell changes a
  *    person approved on a Dabbour card. Writes go through the same path the
  *    editor's plugins use (_beforeEvalCommand / builder API / History), so
@@ -242,6 +251,142 @@
         if (H && typeof H.Is_LastPointEmpty === 'function' && !H.Is_LastPointEmpty()) api._afterEvalCommand(finish);
         else finish();
     }
+    // ── the Mudaber look ────────────────────────────────────────────────────
+    var LOOK = 'MudaberLook';
+    var INK = [42, 49, 80], HEAD = [242, 245, 252], MUTED = [165, 170, 192];
+    function colLetter(i) { var s = ''; i += 1; while (i > 0) { var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - m - 1) / 26); } return s; }
+    function marked(ws) {
+        try { return ws.GetDefNames().some(function (n) { return n.GetName() === LOOK; }); } catch (e) { return true; }
+    }
+    function editable() {
+        try {
+            var main = app() && app().getController('Main');
+            if (main && main.appOptions && !main.appOptions.isEdit) return false;
+            var api = sdk().api;
+            return !(api.isLongAction && api.isLongAction()) && !(api.canRunBuilderScript && !api.canRunBuilderScript());
+        } catch (e) { return false; }
+    }
+    /* Row 1 reads as a header when it holds two or more words and no numbers,
+       and there is data under it. */
+    function headerRow(ws, span) {
+        if (span.r2 <= span.r1) return false;
+        var words = 0;
+        for (var c = span.c1; c <= span.c2; c++) {
+            var v = text(ws.GetRangeByNumber(span.r1, c).GetText()).trim();
+            if (!v) continue;
+            if (/^-?[\d.,%$]+$/.test(v)) return false;
+            words++;
+        }
+        return words >= 2;
+    }
+    function lookSheet(ws, Api) {
+        var span = parseA1(ws.GetUsedRange().GetAddress(false, false, 'xlA1', false));
+        var lastCol = Math.max(span.c2 + 4, 25), lastRow = Math.max(span.r2 + 200, 200);
+        // Whole columns, so cells typed later inherit the look too.
+        var all = ws.GetRange('A:' + colLetter(lastCol));
+        all.SetFontName('Inter');
+        all.SetFontSize(10);
+        all.SetAlignVertical('center');
+        ws.GetRange('1:' + (lastRow + 1)).SetRowHeight(22.5);
+        if (headerRow(ws, span)) {
+            var h = ws.GetRange(colLetter(span.c1) + (span.r1 + 1) + ':' + colLetter(span.c2) + (span.r1 + 1));
+            h.SetBold(true);
+            h.SetFontColor(Api.CreateColorFromRGB(INK[0], INK[1], INK[2]));
+            h.SetFillColor(Api.CreateColorFromRGB(HEAD[0], HEAD[1], HEAD[2]));
+            h.SetRowHeight(25.5);
+            // A numbering column ("#") recedes.
+            if (text(ws.GetRangeByNumber(span.r1, span.c1).GetText()).trim() === '#' && span.r2 > span.r1) {
+                ws.GetRange(colLetter(span.c1) + (span.r1 + 2) + ':' + colLetter(span.c1) + (span.r2 + 1)).SetFontColor(Api.CreateColorFromRGB(MUTED[0], MUTED[1], MUTED[2]));
+            }
+        }
+        // Inter is wider than Calibri: a column whose longest text would no
+        // longer fit grows to fit it; none ever shrinks (an empty column is
+        // wide on purpose). Widths are written in the stored unit (Excel
+        // characters, padding included) the file already uses; the builder's
+        // own getter and setter disagree on units, so the model is used here.
+        try {
+            var model = ws.worksheet;
+            var defW = window.AscCommonExcel && window.AscCommonExcel.oDefaultMetrics ? window.AscCommonExcel.oDefaultMetrics.ColWidthChars : 8.43;
+            var lastR = Math.min(span.r2, span.r1 + 500);
+            for (var c = span.c1; c <= span.c2; c++) {
+                var longest = 0;
+                for (var r = span.r1; r <= lastR; r++) {
+                    var len = text(ws.GetRangeByNumber(r, c).GetText()).length;
+                    if (len > longest) longest = len;
+                }
+                if (!longest) continue;
+                var need = Math.min(longest * 1.3 + 1.4, 80);
+                var have = model.getColWidth(c);
+                if (!(have > 0)) have = defW;
+                if (need > have) model.setColWidth(need, c, c);
+            }
+        } catch (e) { /* widths stay as they were */ }
+        ws.AddDefName(LOOK, "'" + ws.GetName().replace(/'/g, "''") + "'!$A$1", true);
+        return span;
+    }
+    /* Runs one builder command the way plugins do (one undo step). */
+    function command(fn, done) {
+        var s = sdk(), api = s.api;
+        var error = null;
+        api._beforeEvalCommand();
+        try { fn(s.Api); } catch (e) { error = e && e.message ? e.message : String(e); }
+        var finish = function () {
+            api.evalCommand = false;
+            var end = function () { done && done(error); };
+            if (typeof api.onEndBuilderScript === 'function') api.onEndBuilderScript(end); else end();
+        };
+        var H = window.AscCommon && window.AscCommon.History;
+        if (H && typeof H.Is_LastPointEmpty === 'function' && !H.Is_LastPointEmpty()) api._afterEvalCommand(finish);
+        else finish();
+    }
+    var lastLook = null, docReady = false;
+    function isReady() {
+        if (docReady) return true;
+        try { return !!app().getController('Main')._isDocReady; } catch (e) { return false; }
+    }
+    function autoLook() {
+        // Never before the whole workbook is in: a half-loaded model has no
+        // sheets to judge, and a mark set there would be wrong.
+        if (!isReady() || !editable()) return;
+        var ws;
+        try { ws = sdk().Api.GetActiveSheet(); } catch (e) { return; }
+        if (!ws || marked(ws)) return;
+        var name = ws.GetName();
+        command(function (Api) { lookSheet(ws, Api); }, function (error) {
+            if (error) return;
+            lastLook = { sheet: name, at: Date.now() };
+            tellParent({ type: 'mudaber-sheet-look', sheet: name });
+        });
+    }
+    /* "Undo" on the app's notice: put the sheet back, keep it marked so it is not done again. */
+    function unlook() {
+        var api = sdk().api;
+        if (!lastLook || Date.now() - lastLook.at > 60000) throw new Error('Too late to undo here; use the undo button.');
+        var name = lastLook.sheet;
+        lastLook = null;
+        api.asc_Undo();
+        command(function (Api) {
+            var ws = Api.GetSheet(name);
+            if (ws && !marked(ws)) ws.AddDefName(LOOK, "'" + name.replace(/'/g, "''") + "'!$A$1", true);
+        });
+    }
+    var lookTimer = 0;
+    function lookSoon() { clearTimeout(lookTimer); lookTimer = setTimeout(function () { try { autoLook(); } catch (e) { /* never break the editor */ } }, 400); }
+    (function hook(n) {
+        var ok = false;
+        try {
+            if (window.Common && window.Common.NotificationCenter && app()) {
+                window.Common.NotificationCenter.on('document:ready', function () { docReady = true; lookSoon(); });
+                var api = sdk().api;
+                api.asc_registerCallback('asc_onActiveSheetChanged', lookSoon);
+                api.asc_registerCallback('asc_onSheetsChanged', lookSoon);
+                ok = true;
+            }
+        } catch (e) { ok = false; }
+        if (!ok && n < 600) setTimeout(function () { hook(n + 1); }, 100);
+        else if (ok) lookSoon(); // in case the document was already in before we hooked on
+    })(0);
+
     function show(where) {
         var s = sdk();
         var rg = s.Api.GetActiveSheet().GetRange(text(where));
@@ -258,6 +403,7 @@
             if (d.op === 'snapshot') reply({ ok: true, result: snapshot(d) });
             else if (d.op === 'apply') apply(d.changes, d.sheet, function (r) { reply({ ok: !r.error, result: r, error: r.error }); });
             else if (d.op === 'show') { show(d.where); reply({ ok: true }); }
+            else if (d.op === 'unlook') { unlook(); reply({ ok: true }); }
             else if (d.op === 'mode') { if (d.mode === 'simple' || d.mode === 'full') setMode(d.mode); reply({ ok: true, result: { mode: mode } }); }
             else if (d.op === 'ping') reply({ ok: true, result: { mode: mode, ready: !!(window.g_asc_plugins && window.g_asc_plugins.api) } });
             else reply({ ok: false, error: 'Unknown request.' });
