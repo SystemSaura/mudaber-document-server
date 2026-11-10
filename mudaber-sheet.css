@@ -3,10 +3,15 @@
  * Two modes, picked by mudaber-sheet.js on <html> before the layout is
  * measured:
  *   .mdb-simple  one slim row of everyday tools, no tab strip, no left rail,
- *                no name box or fx button, a quieter status bar. The default.
+ *                no formula bar, a quieter status bar. The default.
  *   .mdb-full    the stock ribbon, untouched, plus a "Fewer tools" button.
  * Nothing is removed: everything hidden here is one press of More away, and
  * every keyboard shortcut still works in both modes.
+ *
+ * Both modes carry the switch for Mudaber's top bar (.mdb-fold), shown once
+ * the page says its bar can fold (html.mdb-bar). While it is folded
+ * (html.mdb-bar-off) the toolbar's first row also carries Back, and starts
+ * after --mdb-inset: the corner where the mac window keeps its buttons.
  *
  * Colours come from the Mudaber chrome tokens (mudaber-chrome.css), so the
  * light and dark themes both hold.
@@ -37,6 +42,12 @@ html.mdb-simple #toolbar .box-panels > .panel[data-tab="home"] {
   position: static !important;
   overflow: visible !important;
 }
+/* The row's hairline is drawn by a layer the editor lays over the whole row
+   (.box-controls::before). It is only a shadow, but it took the pointer from
+   everything under it that is not positioned: Find, and the top bar's switch.
+   It also starts after the row's padding, so the line began 12px in. */
+#toolbar .box-controls::before { pointer-events: none; }
+html.mdb-simple #toolbar .box-controls::before { left: 0; }
 html.mdb-simple #toolbar .box-panels > .panel:not([data-tab="home"]) { display: none !important; }
 html.mdb-simple #toolbar .box-controls .group,
 html.mdb-simple #toolbar .box-controls .elset { display: contents !important; }
@@ -140,23 +151,64 @@ body.theme-mudaber-carbon .mdb-oo i {
   background-image: url('../../../../common/main/resources/img/header/header-logo_s.svg');
 }
 
-/* "Fewer tools", on the full ribbon's tab strip */
-#toolbar .box-tabs .extra.right { position: relative; }
-.mdb-less { display: none; position: absolute; right: 10px; top: 3px; height: 26px; padding: 0 10px 0 8px; font-size: 12.5px; }
+/* "Fewer tools" and the top bar's switch, on the full ribbon's tab strip:
+   after the editor's own corner (Search, who else is in the file), never laid
+   over it */
+html.mdb-full #toolbar .box-tabs .extra.right { display: flex; }
+html.mdb-full #toolbar .box-tabs .extra.right > section { flex: 1 1 auto; min-width: 0; }
+.mdb-strip { display: none; flex: none; align-self: center; align-items: center; gap: 2px; margin-inline: 2px 10px; }
+html.mdb-full .mdb-strip { display: inline-flex; }
+/* That corner's glyphs come in two colours and the editor reaches for the
+   white ones, right for its own green strip. Ours is white in the light
+   theme, so Search sat there unseen. */
+body.theme-mudaber-pure {
+  --button-header-normal-icon-offset-x: 0;
+  --button-header-active-icon-offset-x: 0;
+}
+.mdb-strip .mdb-btn { height: 26px; }
+.mdb-less { padding: 0 10px 0 8px; font-size: 12.5px; }
 .mdb-less svg { width: 13px; height: 13px; }
-html.mdb-full .mdb-less { display: inline-flex; }
+.mdb-strip .mdb-fold { padding: 0 6px; }
+.mdb-strip .mdb-fold svg { width: 15px; height: 15px; }
+
+/* ── the switch for Mudaber's top bar, and Back while it is folded ─────── */
+.mdb-fold { display: none; padding: 0 7px; }
+html.mdb-bar .mdb-fold { display: inline-flex; }
+.mdb-back {
+  display: none;
+  flex: none;
+  justify-content: center;
+  width: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: width .38s cubic-bezier(.16, 1, .3, 1), margin .38s cubic-bezier(.16, 1, .3, 1), opacity .2s, visibility 0s .38s;
+}
+html.mdb-bar .mdb-back { display: inline-flex; }
+html.mdb-bar-off .mdb-back { width: 32px; margin-right: 8px; opacity: 1; visibility: visible; transition-delay: 0s; }
+html.mdb-simple #toolbar .box-controls { transition: padding-left .38s cubic-bezier(.16, 1, .3, 1); }
+html.mdb-simple.mdb-bar-off #toolbar .box-controls { padding-left: calc(12px + var(--mdb-inset, 0px)) !important; }
+/* a pressed switch rests until the pointer moves on it again (mudaber-sheet.js) */
+.mdb-btn.mdb-rest, .mdb-btn.mdb-rest:hover, .mdb-btn.mdb-rest:active { background: transparent; color: var(--mdb-ink-2); }
+
+/* the full ribbon keeps Back on its tab strip, the row that is at the top */
+html.mdb-full #toolbar .box-controls > .mdb-back { display: none; }
+html.mdb-full #toolbar .box-tabs .extra.left { display: flex; align-items: center; transition: padding-left .38s cubic-bezier(.16, 1, .3, 1); }
+html.mdb-full #toolbar .box-tabs .extra.left > .mdb-back { height: 26px; }
+html.mdb-full.mdb-bar-off #toolbar .box-tabs .extra.left { padding-left: calc(8px + var(--mdb-inset, 0px)); }
+html.mdb-full.mdb-bar-off #toolbar .box-tabs .extra.left > .mdb-back { width: 28px; margin-right: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .mdb-back, html.mdb-simple #toolbar .box-controls, html.mdb-full #toolbar .box-tabs .extra.left { transition: none; }
+}
 
 /* ── simple mode: the rest of the frame ───────────────────────────────── */
 html.mdb-simple #left-menu { display: none !important; }
 
-/* the formula bar keeps its text box; name box and fx go */
-html.mdb-simple #cell-editing-box .ce-group-name { display: none !important; }
-html.mdb-simple #cell-editing-box .ce-group-content {
-  margin: 0 !important;
-  border-left: 0 !important;
-  border-right: 0 !important;
-}
-html.mdb-simple #cell-editing-box .ce-group-content #ce-cell-content { padding-left: 14px !important; padding-right: 26px !important; }
+/* no formula bar: a cell is edited where it is. The editor's layout skips a
+   row that is not displayed, so the grid takes its place; More brings it back. */
+html.mdb-simple #cell-editing-box { display: none !important; }
 
 /* status bar: sheet tabs, add sheet, zoom as a figure */
 html.mdb-simple #status-tabs-scroll,

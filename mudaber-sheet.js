@@ -2,14 +2,15 @@
  *
  * Loaded by the patched spreadsheeteditor/main/index.html ahead of the app, so
  * the first thing it does (pick the toolbar mode) lands before the layout is
- * measured. Two jobs:
+ * measured. Four jobs:
  *
  * 1. Everyday tools. The ribbon's ten tabs and ~150 buttons are what most
  *    people never touch, so by default ("simple") the sheet shows one row:
  *    undo, redo, bold, italic, strikethrough, colours, alignment, sort and
- *    filter, plus More, Find and the ONLYOFFICE mark. More brings the whole
- *    ribbon back, untouched; "Fewer tools" returns. The choice is remembered
- *    on this device. The look of both modes lives in mudaber-sheet.css.
+ *    filter, plus More, Find and the ONLYOFFICE mark, and no formula bar.
+ *    More brings the whole ribbon back, untouched, formula bar included;
+ *    "Fewer tools" returns. The choice is remembered on this device. The look
+ *    of both modes lives in mudaber-sheet.css.
  *
  * 2. The Mudaber look, on its own. The first time a sheet opens here in edit
  *    mode (and any tab added later, the moment it is shown), it gets Inter 10,
@@ -27,6 +28,14 @@
  *    version of the file. Writes go through the same path the
  *    editor's plugins use (_beforeEvalCommand / builder API / History), so
  *    they co-edit, save and undo like anything typed by hand.
+ *
+ * 4. The switch for Mudaber's top bar. The bar with the file name and Share
+ *    belongs to Mudaber's page, above this frame; the button that folds it
+ *    away lives here, at the end of the toolbar, so it stays in one place
+ *    whether the bar is there or not. The page owns the state and remembers
+ *    it: this frame asks (mudaber-sheet-header), the page answers with the
+ *    "header" request, and while the bar is folded the toolbar carries what
+ *    was lost with it (Back, and room for the mac window's buttons).
  */
 (function () {
     'use strict';
@@ -39,7 +48,11 @@
     var ICON = {
         more: '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M144 128a16 16 0 1 1-16-16 16 16 0 0 1 16 16Zm-84-16a16 16 0 1 0 16 16 16 16 0 0 0-16-16Zm136 0a16 16 0 1 0 16 16 16 16 0 0 0-16-16Z"/></svg>',
         find: '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M229.66 218.34 179.6 168.28a88.21 88.21 0 1 0-11.32 11.31l50.06 50.07a8 8 0 0 0 11.32-11.32ZM40 112a72 72 0 1 1 72 72 72.08 72.08 0 0 1-72-72Z"/></svg>',
-        less: '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M213.66 165.66a8 8 0 0 1-11.32 0L128 91.31l-74.34 74.35a8 8 0 0 1-11.32-11.32l80-80a8 8 0 0 1 11.32 0l80 80a8 8 0 0 1 0 11.32Z"/></svg>'
+        less: '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M213.66 165.66a8 8 0 0 1-11.32 0L128 91.31l-74.34 74.35a8 8 0 0 1-11.32-11.32l80-80a8 8 0 0 1 11.32 0l80 80a8 8 0 0 1 0 11.32Z"/></svg>',
+        // The top bar as a line, and which way it will go: up and away, or back down.
+        fold: '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M48 80h160a8 8 0 0 0 0-16H48a8 8 0 0 0 0 16Zm165.66 117.66a8 8 0 0 1-11.32 0L128 123.31l-74.34 74.35a8 8 0 0 1-11.32-11.32l80-80a8 8 0 0 1 11.32 0l80 80a8 8 0 0 1 0 11.32Z"/></svg>',
+        unfold: '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M48 80h160a8 8 0 0 0 0-16H48a8 8 0 0 0 0 16Zm-5.66 37.66a8 8 0 0 1 11.32-11.32L128 180.69l74.34-74.35a8 8 0 0 1 11.32 11.32l-80 80a8 8 0 0 1-11.32 0Z"/></svg>',
+        back: '<svg viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M165.66 202.34a8 8 0 0 1-11.32 11.32l-80-80a8 8 0 0 1 0-11.32l80-80a8 8 0 0 1 11.32 11.32L91.31 128Z"/></svg>'
     };
 
     function app() { return window.SSE && typeof window.SSE.getController === 'function' ? window.SSE : null; }
@@ -101,16 +114,87 @@
         }, 120);
     }
 
+    /* Our buttons explain themselves the way the editor's own do: its tooltip,
+       its timing, its look. The text is read when the tip opens, so a button
+       whose meaning flips (the top bar's switch) never shows a stale one. */
+    function tip(b, hide) {
+        try {
+            var $b = window.$ && window.$(b);
+            if (!$b || typeof $b.tooltip !== 'function') return;
+            if (hide) {
+                // As the editor's own buttons do on a press: away, and not back until the pointer has left.
+                var t = $b.data('bs.tooltip');
+                if (t) { if (t.dontShow === undefined) t.dontShow = true; t.hide(); }
+                return;
+            }
+            $b.tooltip({ title: function () { return b.getAttribute('data-mdb-tip') || ''; }, placement: 'cursor' });
+        } catch (e) { /* the label is still read out (aria-label) */ }
+    }
+    function label(b, title) {
+        b.setAttribute('data-mdb-tip', title);
+        b.setAttribute('aria-label', title);
+    }
     function button(cls, html, title, onClick) {
         var b = document.createElement('button');
         b.type = 'button';
         b.className = 'mdb-btn ' + cls;
         b.innerHTML = html;
-        if (title) b.setAttribute('data-mdb-tip', title);
-        b.setAttribute('aria-label', title || b.textContent);
-        b.addEventListener('click', function (e) { e.preventDefault(); onClick(); });
+        if (title) label(b, title);
+        b.addEventListener('click', function (e) { e.preventDefault(); tip(b, true); onClick(e); });
         // The editor takes focus on mousedown everywhere; keep the grid's.
         b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        tip(b);
+        return b;
+    }
+
+    // ── the switch for Mudaber's top bar ────────────────────────────────────
+    /* Nothing of it shows until the page says its bar can fold (the "header"
+       request): an app that predates the fold never asks, so it never gets a
+       button that does nothing. */
+    var bar = { on: false, off: false };
+    var INSET_MAX = 200;
+    function paintBar() {
+        var title = bar.off ? 'Show the top bar' : 'Hide the top bar';
+        var all = document.querySelectorAll('.mdb-fold');
+        for (var i = 0; i < all.length; i++) {
+            all[i].innerHTML = bar.off ? ICON.unfold : ICON.fold;
+            label(all[i], title);
+            all[i].setAttribute('aria-expanded', bar.off ? 'false' : 'true');
+        }
+    }
+    function setBar(d) {
+        var inset = Math.round(Number(d.inset));
+        bar.on = true;
+        bar.off = !!d.collapsed;
+        // Where the mac window keeps its buttons, once the bar that made room for them is gone.
+        root.style.setProperty('--mdb-inset', (inset > 0 && inset <= INSET_MAX ? inset : 0) + 'px');
+        if (!root.classList.contains('mdb-bar')) {
+            root.classList.add('mdb-bar');
+            void root.offsetWidth; // Back is laid out before it moves, so the first fold glides like the rest
+        }
+        root.classList.toggle('mdb-bar-off', bar.off);
+        paintBar();
+        return { collapsed: bar.off, mode: mode };
+    }
+    function askFold() { tellParent({ type: 'mudaber-sheet-header', collapsed: !bar.off }); }
+    function askBack() { tellParent({ type: 'mudaber-sheet-back' }); }
+    /* Folding slides this whole frame under a pointer that stays where it was,
+       and a framed document is not told its pointer is gone until it next
+       moves: the switch would sit there lit, 50px from the pointer. So a
+       pressed switch rests (.mdb-rest) until the pointer moves on it again. */
+    function foldButton() {
+        var b = button('mdb-fold', '', '', function (e) {
+            var x = e.clientX, y = e.clientY;
+            if (!b.classList.contains('mdb-rest')) {
+                b.classList.add('mdb-rest');
+                b.addEventListener('mousemove', function wake(m) {
+                    if (m.clientX === x && m.clientY === y) return; // the browser replaying the old position
+                    b.classList.remove('mdb-rest');
+                    b.removeEventListener('mousemove', wake);
+                });
+            }
+            askFold();
+        });
         return b;
     }
 
@@ -127,14 +211,23 @@
         var mark = button('mdb-oo', '<i></i>', 'ONLYOFFICE Docs, the editor inside Mudaber', about);
         tail.appendChild(find1);
         tail.appendChild(mark);
+        tail.appendChild(foldButton());
         var moreBox = document.createElement('div');
         moreBox.className = 'mdb-morebox';
         moreBox.appendChild(more);
         controls.appendChild(moreBox);
         controls.appendChild(tail);
+        controls.insertBefore(button('mdb-back', ICON.back, 'Back', askBack), controls.firstChild);
 
-        var less = button('mdb-less', ICON.less + '<span>Fewer tools</span>', 'Back to the everyday tools', function () { setMode('simple'); });
-        tabsRight.appendChild(less);
+        // The full ribbon's tab strip carries the same three: Back, "Fewer tools", the switch.
+        var strip = document.createElement('div');
+        strip.className = 'mdb-strip';
+        strip.appendChild(button('mdb-less', ICON.less + '<span>Fewer tools</span>', 'Back to the everyday tools', function () { setMode('simple'); }));
+        strip.appendChild(foldButton());
+        tabsRight.appendChild(strip);
+        var tabsLeft = document.querySelector('#toolbar .box-tabs .extra.left');
+        if (tabsLeft) tabsLeft.insertBefore(button('mdb-back', ICON.back, 'Back', askBack), tabsLeft.firstChild);
+        paintBar();
 
         if (mode === 'simple') toHome();
         relayout();
@@ -430,10 +523,13 @@
             else if (d.op === 'where') reply({ ok: true, result: where() });
             else if (d.op === 'goto') { goto(d); reply({ ok: true }); }
             else if (d.op === 'mode') { if (d.mode === 'simple' || d.mode === 'full') setMode(d.mode); reply({ ok: true, result: { mode: mode } }); }
+            else if (d.op === 'header') reply({ ok: true, result: setBar(d) });
             else if (d.op === 'ping') reply({ ok: true, result: { mode: mode, ready: !!(window.g_asc_plugins && window.g_asc_plugins.api) } });
             else reply({ ok: false, error: 'Unknown request.' });
         } catch (err) {
             reply({ ok: false, error: err && err.message ? err.message : String(err) });
         }
     });
+    // A frame that reloads (a dropped session, a new version) starts bare: say so, and the page asks again.
+    tellParent({ type: 'mudaber-sheet-up' });
 })();

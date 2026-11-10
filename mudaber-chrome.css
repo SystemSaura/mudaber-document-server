@@ -40,6 +40,15 @@ body.theme-type-dark {
   --mdb-focus-ring: rgba(124, 106, 240, .28);
 }
 
+/* ── the ONLYOFFICE logo on our light strip ───────────────────────── */
+/* The editor has the logo in two colours and picks by the strip's colour, but
+   with a theme of ours it can settle on the white one while the strip is
+   white: a logo nobody can see, and the licence wants it seen. This is the
+   file the editor itself uses on a light strip. */
+body.theme-mudaber-pure .extra #header-logo i {
+  background-image: url('../../../../common/main/resources/img/header/dark-logo_s.svg');
+}
+
 /* ── type ─────────────────────────────────────────────────────────── */
 /* Font is the one thing that is genuinely theme independent. */
 body,
