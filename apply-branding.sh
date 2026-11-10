@@ -58,6 +58,7 @@ $WEBAPPS/apps/api/documents/cache-scripts.html|patch-ui-chrome.py|--cachescripts
 $SDK_CELL|patch-sdk-colors.py|-
 $SDK_CELL|patch-sdk-move-insert.py|-
 $SDK_CELL|patch-sdk-padding.py|-
+$SDK_CELL|patch-sdk-copy-text.py|-
 "
 
 echo "$PATCHES" | while IFS='|' read -r path patcher mode; do

@@ -22,7 +22,9 @@
  *
  * 3. A bridge for Dabbour. Mudaber's own page (this frame's parent, and only
  *    it) can ask for a snapshot of the open sheet and apply the cell changes a
- *    person approved on a Dabbour card. Writes go through the same path the
+ *    person approved on a Dabbour card. It also asks where the person is (tab
+ *    and cells) and takes them back there when it reopens the sheet on a newer
+ *    version of the file. Writes go through the same path the
  *    editor's plugins use (_beforeEvalCommand / builder API / History), so
  *    they co-edit, save and undo like anything typed by hand.
  */
@@ -392,6 +394,27 @@
         var rg = s.Api.GetActiveSheet().GetRange(text(where));
         if (rg) rg.Select();
     }
+    /* Where the person is: the app asks before it reopens the sheet on a newer
+       version (the file changed under it, say Claude put up an edit) and puts
+       them back on the same tab and cells afterwards. Not an edit: nothing here
+       enters the undo history. */
+    function where() {
+        var Api = sdk().Api;
+        var sel = '';
+        try { sel = Api.GetSelection().GetAddress(false, false, 'xlA1', false); } catch (e) { /* none */ }
+        return { sheet: Api.GetActiveSheet().GetName(), selection: sel };
+    }
+    function goto(place) {
+        var s = sdk(), Api = s.Api;
+        var ws = place && place.sheet ? Api.GetSheet(text(place.sheet)) : null;
+        if (ws && ws.GetName() !== Api.GetActiveSheet().GetName()) {
+            // The tab strip's own path, so the view follows the model.
+            if (typeof s.api.asc_showWorksheet === 'function') s.api.asc_showWorksheet(ws.GetIndex());
+            else ws.SetActive();
+        }
+        var rg = place && place.selection ? Api.GetActiveSheet().GetRange(text(place.selection)) : null;
+        if (rg) rg.Select();
+    }
 
     window.addEventListener('message', function (e) {
         if (e.source !== window.parent) return;
@@ -404,6 +427,8 @@
             else if (d.op === 'apply') apply(d.changes, d.sheet, function (r) { reply({ ok: !r.error, result: r, error: r.error }); });
             else if (d.op === 'show') { show(d.where); reply({ ok: true }); }
             else if (d.op === 'unlook') { unlook(); reply({ ok: true }); }
+            else if (d.op === 'where') reply({ ok: true, result: where() });
+            else if (d.op === 'goto') { goto(d); reply({ ok: true }); }
             else if (d.op === 'mode') { if (d.mode === 'simple' || d.mode === 'full') setMode(d.mode); reply({ ok: true, result: { mode: mode } }); }
             else if (d.op === 'ping') reply({ ok: true, result: { mode: mode, ready: !!(window.g_asc_plugins && window.g_asc_plugins.api) } });
             else reply({ ok: false, error: 'Unknown request.' });
