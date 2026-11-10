@@ -306,11 +306,10 @@
         var s = sdk(), api = s.api, Api = s.Api;
         if (!Array.isArray(changes) || !changes.length) throw new Error('Nothing to change.');
         if (api.isLongAction && api.isLongAction()) throw new Error('The sheet is busy. Try again in a moment.');
-        if (api.canRunBuilderScript && !api.canRunBuilderScript()) throw new Error('This sheet cannot be edited right now (read-only, or a dialog is open).');
         var ws = sheetName ? Api.GetSheet(sheetName) : Api.GetActiveSheet();
         if (!ws) throw new Error('There is no sheet called ' + sheetName + '.');
+        if (!begin(api)) throw new Error('This sheet cannot be edited right now (read-only, or a dialog is open).');
         var applied = 0, error = null;
-        api._beforeEvalCommand();
         try {
             for (var i = 0; i < changes.length; i++) {
                 var ch = changes[i] || {};
@@ -358,8 +357,21 @@
             var main = app() && app().getController('Main');
             if (main && main.appOptions && !main.appOptions.isEdit) return false;
             var api = sdk().api;
-            return !(api.isLongAction && api.isLongAction()) && !(api.canRunBuilderScript && !api.canRunBuilderScript());
+            return !(api.isLongAction && api.isLongAction());
         } catch (e) { return false; }
+    }
+    /* Opens the editor's bracket for one builder command, the way plugins do.
+       canRunBuilderScript() is NOT a question: it starts a history point, a
+       transaction and a group of actions that only onEndBuilderScript closes.
+       Called as a mere check (as editable() once did, on every sheet that
+       already had the look), it left a transaction open for the rest of the
+       session, and the editor never autosaves while one is open: typing sat
+       at "Saving..." and never reached the server (found 2026-11-10). So it is
+       called here, once, right before the command that closes it. */
+    function begin(api) {
+        if (typeof api.canRunBuilderScript === 'function' && !api.canRunBuilderScript()) return false;
+        api._beforeEvalCommand();
+        return true;
     }
     /* Row 1 reads as a header when it holds two or more words and no numbers,
        and there is data under it. */
@@ -423,7 +435,7 @@
     function command(fn, done) {
         var s = sdk(), api = s.api;
         var error = null;
-        api._beforeEvalCommand();
+        if (!begin(api)) { if (done) done('This sheet cannot be edited right now.'); return; }
         try { fn(s.Api); } catch (e) { error = e && e.message ? e.message : String(e); }
         var finish = function () {
             api.evalCommand = false;
